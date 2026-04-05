@@ -1,0 +1,111 @@
+/* RESET */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+/* BODY */
+body {
+  background: linear-gradient(blue, #87ceeb);
+}
+
+/* CENTER CONTAINER */
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+/* FORM BOX */
+.form-box {
+  width: 350px;
+  padding: 25px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+}
+
+/* HEADING */
+.form-box h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+/* LABEL */
+label {
+  display: block;
+  margin-top: 12px;
+  font-weight: bold;
+  font-size: 14px;
+  color: #444;
+}
+
+/* INPUT + SELECT */
+input, select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  outline: none;
+  transition: 0.3s;
+}
+
+/* FOCUS EFFECT */
+input:focus, select:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 8px rgba(0, 123, 255, 0.3);
+}
+
+/* BUTTON */
+button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 20px;
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+/* BUTTON HOVER */
+button:hover {
+  transform: scale(1.03);
+  background: linear-gradient(135deg, #0056b3, #003f7f);
+}
+
+/* TOGGLE TEXT */
+.toggle {
+  margin-top: 15px;
+  text-align: center;
+  color: #007bff;
+  cursor: pointer;
+}
+
+
+/* ERROR */
+.error {
+  color: red;
+  text-align: center;
+  margin-top: 10px;
+}
+.toggle {
+  cursor: default;   /* pura text normal */
+}
+
+.click-text {
+  cursor: pointer;   /* sirf yahan pointer */
+  text-decoration: underline;
+  color: rgb(0, 0, 240);
+}
+
+.click-text:hover {
+  color: rgb(47, 69, 193);
+}
