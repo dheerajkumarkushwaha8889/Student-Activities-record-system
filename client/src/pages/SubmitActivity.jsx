@@ -13,38 +13,41 @@ export default function SubmitActivity() {
     mode: "",
     position: "",
     proofLink: "",
-    file: null
+    files: []
   });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
+      const formData = new FormData();
+      
+      // 🔥 AUTO USER DATA
+      formData.append("studentName", user.name || "");
+      formData.append("studentEmail", user.email || "");
+      formData.append("roll", user.roll || "");
+      formData.append("branch", user.branch || "");
+      formData.append("batch", user.batch || "");
+      formData.append("mobile", user.mobile || "");
+
+      // 🔥 ACTIVITY DATA
+      formData.append("title", form.title);
+      formData.append("type", form.type);
+      formData.append("description", form.description);
+      formData.append("date", form.date);
+      formData.append("organizer", form.organizer);
+      formData.append("mode", form.mode);
+      formData.append("position", form.position);
+      formData.append("proofLink", form.proofLink);
+
+      // 🔥 FILE
+      if (form.files && form.files.length > 0) {
+        formData.append("file", form.files[0]);
+      }
+
       const res = await fetch("http://localhost:5000/submit-activity", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-
-          // 🔥 AUTO USER DATA
-          studentName: user.name,
-          studentEmail: user.email,
-          roll: user.roll,
-          branch: user.branch,
-          batch: user.batch,
-          mobile: user.mobile,
-
-          // 🔥 ACTIVITY DATA
-          title: form.title,
-          type: form.type,
-          description: form.description,
-          date: form.date,
-          organizer: form.organizer,
-          mode: form.mode,
-          position: form.position,
-          proofLink: form.proofLink
-        })
+        body: formData
       });
 
       const data = await res.json();
@@ -60,7 +63,7 @@ export default function SubmitActivity() {
         mode: "",
         position: "",
         proofLink: "",
-        file: null
+        files: []
       });
 
     } catch (err) {
@@ -97,9 +100,17 @@ export default function SubmitActivity() {
         >
           <option value="">Select Type</option>
           <option>Academic</option>
-          <option>Sports</option>
-          <option>Workshop</option>
           <option>Internship</option>
+          <option>Hackathon</option>
+          <option>Seminar / Conference</option>
+          <option>Certification Course</option>
+          <option>Workshop / Training</option>
+          <option>Project / Exhibition</option>
+          <option>Publication / Research Paper</option>
+          <option>Technical Competition</option>
+          <option>Non-Technical Competition</option>
+          <option>Social / Volunteer Work</option>
+          <option>Sports</option>
           <option>Cultural</option>
         </select>
 
@@ -151,7 +162,7 @@ export default function SubmitActivity() {
 
         {/* PROOF LINK */}
         <input
-          placeholder="Proof Link (Google Drive / Certificate URL)"
+          placeholder="Proof Link (optional if uploading file)"
           value={form.proofLink}
           onChange={(e) => setForm({ ...form, proofLink: e.target.value })}
           style={input}
@@ -159,11 +170,25 @@ export default function SubmitActivity() {
 
         {/* FILE (UI ONLY) */}
         <div style={uploadBox}>
-          <input
-            type="file"
-            onChange={(e) => setForm({ ...form, file: e.target.files[0] })}
-          />
-          <p style={{ fontSize: "12px", color: "#777" }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "10px" }}>
+            <input
+              type="file"
+              onChange={(e) => setForm({ ...form, files: Array.from(e.target.files) })}
+            />
+            {form.files && form.files.length > 0 && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "15px", marginTop: "5px" }}>
+                {form.files.map((file, index) => (
+                  <span 
+                    key={index}
+                    style={{ textDecoration: "none", color: "#2563eb", fontWeight: "bold" }}
+                  >
+                    📄 {file.name}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+          <p style={{ fontSize: "12px", color: "#777", marginTop: "5px" }}>
             Upload Certificate (optional)
           </p>
         </div>

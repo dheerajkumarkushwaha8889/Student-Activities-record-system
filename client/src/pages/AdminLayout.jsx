@@ -38,8 +38,14 @@ export default function AdminLayout() {
           <p 
            style={linkStyle(location, "/admin/portfolio")} 
            onClick={() => navigate("/admin/portfolio")} >
-             📁 Generate Portfolio
-       </p>
+             📁 Generate Report & Portfolio
+          </p>
+
+          <p 
+           style={linkStyle(location, "/admin/add-faculty")} 
+           onClick={() => navigate("/admin/add-faculty")} >
+             👨‍🏫 Add Faculty
+          </p>
         </div>
 
         <button

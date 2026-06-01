@@ -7,14 +7,30 @@ export default function ForgotPassword() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleReset = async (e) => {
     e.preventDefault();
 
-    if (!email || !password) {
+    // ✅ Count digits in password
+    const numberCount = (password.match(/\d/g) ?? []).length;
+
+    // ✅ Validation
+    if (!email || !password || !confirmPassword) {
       setMessage("All fields required ❌");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setMessage("Passwords do not match ❌");
+      return;
+    }
+
+    if (numberCount < 3) {
+      setMessage("Password must contain at least 3 digits ❌");
       return;
     }
 
@@ -28,7 +44,7 @@ export default function ForgotPassword() {
         },
         body: JSON.stringify({
           email: email,
-          newPassword: password   // ✅ IMPORTANT
+          newPassword: password
         })
       });
 
@@ -37,7 +53,7 @@ export default function ForgotPassword() {
       setMessage(data.message);
 
       // ✅ SUCCESS → LOGIN PAGE
-      if (data.message.includes("success")) {
+      if (data.message.toLowerCase().includes("success")) {
         setTimeout(() => {
           navigate("/");
         }, 1500);
@@ -77,15 +93,28 @@ export default function ForgotPassword() {
             style={input}
           />
 
+          <label>Confirm Password</label>
+          <input
+            type="password"
+            placeholder="Confirm new password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            style={input}
+          />
+
           <button type="submit" style={button} disabled={loading}>
             {loading ? "Processing..." : "Reset Password"}
           </button>
 
         </form>
 
-        {message && <p style={msg}>{message}</p>}
+        {message && (
+          <p style={{ ...msg, color: message.includes("success") ? "green" : "red" }}>
+            {message}
+          </p>
+        )}
 
-        <p style={back} onClick={() => navigate("/?mode=login")}>
+        <p style={back} onClick={() => navigate("/")}>
           ⬅ Back to Login
         </p>
 
@@ -93,7 +122,6 @@ export default function ForgotPassword() {
     </div>
   );
 }
-
 
 /* ================= STYLES ================= */
 
@@ -138,8 +166,7 @@ const button = {
 
 const msg = {
   textAlign: "center",
-  marginTop: "10px",
-  color: "green"
+  marginTop: "10px"
 };
 
 const back = {

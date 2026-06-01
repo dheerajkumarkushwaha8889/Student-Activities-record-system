@@ -1,9 +1,43 @@
 import { useEffect, useState } from "react";
 
 export default function StudentDashboard() {
-  const user = JSON.parse(localStorage.getItem("user")) || {};
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")) || {});
   const [activities, setActivities] = useState([]);
 
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: user.name || "",
+    roll: user.roll || "",
+    branch: user.branch || "",
+    batch: user.batch || "",
+    semester: user.semester || "",
+    mobile: user.mobile || ""
+  });
+
+  const handleEditChange = (e) => setEditForm({ ...editForm, [e.target.name]: e.target.value });
+
+  const submitEdit = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`http://localhost:5000/edit-student/${user.email}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editForm)
+      });
+      const data = await res.json();
+      alert(data.message);
+      
+      if (data.message.includes("successful")) {
+        const updatedUser = { ...user, ...editForm };
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+        setUser(updatedUser);
+        setIsEditing(false);
+      }
+    } catch (err) {
+      console.log(err);
+      alert("Error updating profile");
+    }
+  };
   // FETCH ACTIVITIES
   useEffect(() => {
     if (!user.email) return;
@@ -38,9 +72,12 @@ export default function StudentDashboard() {
 
       {/* USER INFO CARD */}
       <div style={profileCard}>
-        <h2 style={{ marginBottom: "15px", color: "#2563eb" }}>
-          🎓 Student Profile
-        </h2>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
+          <h2 style={{ margin: 0, color: "#2563eb" }}>
+            🎓 Student Profile
+          </h2>
+          <button style={editBtn} onClick={() => setIsEditing(true)}>✏️ Edit Profile</button>
+        </div>
 
         <div style={grid}>
           <p><strong>Name:</strong> {user.name}</p>
@@ -48,6 +85,7 @@ export default function StudentDashboard() {
           <p><strong>Roll No:</strong> {user.roll}</p>
           <p><strong>Branch:</strong> {user.branch}</p>
           <p><strong>Batch:</strong> {user.batch}</p>
+          <p><strong>Semester:</strong> {user.semester}</p>
           <p><strong>Mobile:</strong> {user.mobile}</p>
         </div>
       </div>
@@ -101,6 +139,39 @@ export default function StudentDashboard() {
           ))
       ) : (
         <p style={{ color: "#6b7280" }}>No activities found</p>
+      )}
+
+      {/* EDIT MODAL */}
+      {isEditing && (
+        <div style={modalOverlay}>
+          <div style={modal}>
+            <h2 style={{marginTop: 0, borderBottom: "1px solid #e2e8f0", paddingBottom: "15px"}}>Edit Profile</h2>
+            <form onSubmit={submitEdit} style={form}>
+              <label style={label}>Name</label>
+              <input name="name" value={editForm.name} onChange={handleEditChange} required style={input} />
+              
+              <label style={label}>Roll No</label>
+              <input name="roll" value={editForm.roll} onChange={handleEditChange} required style={input} />
+              
+              <label style={label}>Branch</label>
+              <input name="branch" value={editForm.branch} onChange={handleEditChange} required style={input} />
+              
+              <label style={label}>Batch (e.g. 2022-2026)</label>
+              <input name="batch" value={editForm.batch} onChange={handleEditChange} required style={input} />
+              
+              <label style={label}>Semester</label>
+              <input name="semester" value={editForm.semester} onChange={handleEditChange} required style={input} />
+              
+              <label style={label}>Mobile</label>
+              <input name="mobile" value={editForm.mobile} onChange={handleEditChange} style={input} />
+              
+              <div style={{display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "10px"}}>
+                <button type="button" onClick={() => setIsEditing(false)} style={cancelBtn}>Cancel</button>
+                <button type="submit" style={btn}>Save Changes</button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -171,3 +242,62 @@ const statusStyle = (status) => ({
       ? "#f59e0b"
       : "#ef4444",
 });
+
+const editBtn = {
+  padding: "8px 16px", background: "#f8fafc", color: "#2563eb", border: "1px solid #cbd5e1",
+  borderRadius: "8px", cursor: "pointer", fontWeight: "600", fontSize: "14px"
+};
+
+const modalOverlay = {
+  position: "fixed", top: 0, left: 0, width: "100%", height: "100%",
+  background: "rgba(15, 23, 42, 0.6)", backdropFilter: "blur(4px)",
+  display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000
+};
+
+const modal = {
+  background: "white", padding: "30px", borderRadius: "16px",
+  width: "500px", maxWidth: "90%", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)"
+};
+
+const form = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "15px",
+};
+
+const label = {
+  fontSize: "13px",
+  fontWeight: "600",
+  color: "#475569",
+  marginBottom: "-10px"
+};
+
+const input = {
+  padding: "12px",
+  borderRadius: "8px",
+  border: "1px solid #cbd5e1",
+  fontSize: "14px",
+  outline: "none",
+};
+
+const btn = {
+  padding: "12px",
+  background: "#2563eb",
+  color: "white",
+  border: "none",
+  borderRadius: "8px",
+  cursor: "pointer",
+  fontWeight: "bold",
+  fontSize: "14px",
+};
+
+const cancelBtn = {
+  padding: "12px",
+  background: "#f1f5f9",
+  color: "#475569",
+  border: "none",
+  borderRadius: "8px",
+  cursor: "pointer",
+  fontWeight: "bold",
+  fontSize: "14px",
+};

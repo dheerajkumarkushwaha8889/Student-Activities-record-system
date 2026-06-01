@@ -5,7 +5,10 @@ export default function FacultyDashboard() {
 
   // FETCH FROM BACKEND
   useEffect(() => {
-    fetch("http://localhost:5000/all-activities")
+    const user = JSON.parse(localStorage.getItem("user")) || {};
+    const branchQuery = user.branch ? `?branch=${user.branch}` : "";
+
+    fetch(`http://localhost:5000/all-activities${branchQuery}`)
       .then((res) => res.json())
       .then((data) => setActivities(data))
       .catch((err) => console.log(err));
