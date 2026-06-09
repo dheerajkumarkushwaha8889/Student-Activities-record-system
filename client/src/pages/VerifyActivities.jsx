@@ -17,15 +17,17 @@ export default function VerifyActivities() {
       .catch(err => console.log(err));
   }, []);
 
-  const getDocumentInfo = (link) => {
-    if (!link) return null;
-    if (link.startsWith("http")) return { name: "View Link", url: link };
-    if (link.match(/^\d+-/)) {
-      const parts = link.split("-");
-      const name = parts.slice(1).join("-");
-      return { name: name, url: `http://localhost:5000/uploads/${link}` };
-    }
-    return { name: "View Link", url: `https://${link}` };
+  const getDocuments = (proofLink) => {
+    if (!proofLink) return [];
+    return proofLink.split(",").map(link => link.trim()).filter(Boolean).map(link => {
+      if (link.startsWith("http")) return { name: "View Link", url: link };
+      if (link.match(/^\d+-/)) {
+        const parts = link.split("-");
+        const name = parts.slice(1).join("-");
+        return { name: name, url: `http://localhost:5000/uploads/${link}` };
+      }
+      return { name: "View Link", url: `https://${link}` };
+    });
   };
 
   // SEARCH FILTER (student name/email)
@@ -179,6 +181,9 @@ export default function VerifyActivities() {
               <div style={detailsGrid}>
                 <p style={detailText}><b>Type:</b> {selected.type}</p>
                 <p style={detailText}><b>Date:</b> {selected.date}</p>
+                <p style={detailText}><b>Organizer:</b> {selected.organizer || "N/A"}</p>
+                <p style={detailText}><b>Mode:</b> {selected.mode || "N/A"}</p>
+                <p style={detailText}><b>Position/Rank:</b> {selected.position || "N/A"}</p>
               </div>
               <div style={{ marginTop: "10px" }}>
                 <p style={detailText}><b>Description:</b></p>
@@ -193,18 +198,22 @@ export default function VerifyActivities() {
             </div>
 
             <div style={modalSection}>
-              <h4 style={sectionTitle}>📎 Attached Document</h4>
-              {selected.proofLink ? (
-                <div style={documentBox}>
-                  <p style={{ margin: 0, color: "#475569", fontSize: "14px", marginBottom: "8px" }}>Student has uploaded a supporting document for this activity.</p>
-                  <a 
-                    href={getDocumentInfo(selected.proofLink).url} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    style={documentLink}
-                  >
-                    <span style={{ fontSize: "18px" }}>📄</span> {getDocumentInfo(selected.proofLink).name}
-                  </a>
+              <h4 style={sectionTitle}>📎 Attached Documents</h4>
+              {getDocuments(selected.proofLink).length > 0 ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  {getDocuments(selected.proofLink).map((doc, idx) => (
+                    <div key={idx} style={documentBox}>
+                      <p style={{ margin: 0, color: "#475569", fontSize: "14px", marginBottom: "8px" }}>Supporting document #{idx + 1}:</p>
+                      <a 
+                        href={doc.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        style={documentLink}
+                      >
+                        <span style={{ fontSize: "18px" }}>📄</span> {doc.name}
+                      </a>
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <p style={{ color: "#94a3b8", fontStyle: "italic", fontSize: "14px" }}>No document attached.</p>

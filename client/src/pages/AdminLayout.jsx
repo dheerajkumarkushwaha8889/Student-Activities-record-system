@@ -1,4 +1,5 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import Header from "../components/Header";
 
 export default function AdminLayout() {
   const navigate = useNavigate();
@@ -69,6 +70,7 @@ export default function AdminLayout() {
         padding: "20px",
         background: "#f1f5f9"
       }}>
+        <Header />
         <Outlet />
       </div>
 

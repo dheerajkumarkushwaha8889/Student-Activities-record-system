@@ -1,4 +1,5 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import Header from "../components/Header";
 
 export default function FacultyLayout() {
   const navigate = useNavigate();
@@ -83,6 +84,7 @@ export default function FacultyLayout() {
           background: "#f3f4f6"
         }}
       >
+        <Header />
         <Outlet />
       </div>
     </div>

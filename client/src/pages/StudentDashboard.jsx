@@ -26,7 +26,7 @@ export default function StudentDashboard() {
       });
       const data = await res.json();
       alert(data.message);
-      
+
       if (data.message.includes("successful")) {
         const updatedUser = { ...user, ...editForm };
         localStorage.setItem("user", JSON.stringify(updatedUser));
@@ -60,7 +60,7 @@ export default function StudentDashboard() {
 
   return (
     <div style={{ padding: "30px", background: "#f8fafc", minHeight: "100vh" }}>
-      
+
       {/* HEADER */}
       <h1 style={{ fontSize: "28px", fontWeight: "bold", color: "#1e293b" }}>
         👋 Welcome, {user.name}
@@ -72,21 +72,46 @@ export default function StudentDashboard() {
 
       {/* USER INFO CARD */}
       <div style={profileCard}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
-          <h2 style={{ margin: 0, color: "#2563eb" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #e2e8f0", paddingBottom: "15px", marginBottom: "20px" }}>
+          <h2 style={{ margin: 0, color: "#1e293b", fontSize: "20px", display: "flex", alignItems: "center", gap: "10px" }}>
             🎓 Student Profile
           </h2>
           <button style={editBtn} onClick={() => setIsEditing(true)}>✏️ Edit Profile</button>
         </div>
 
-        <div style={grid}>
-          <p><strong>Name:</strong> {user.name}</p>
-          <p><strong>Email:</strong> {user.email}</p>
-          <p><strong>Roll No:</strong> {user.roll}</p>
-          <p><strong>Branch:</strong> {user.branch}</p>
-          <p><strong>Batch:</strong> {user.batch}</p>
-          <p><strong>Semester:</strong> {user.semester}</p>
-          <p><strong>Mobile:</strong> {user.mobile}</p>
+        <div style={profileLayout}>
+          <div style={profileAvatarSection}>
+            <div style={avatarCircle}>
+              {user.name ? user.name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase() : "ST"}
+            </div>
+            <h3 style={{ margin: "10px 0 5px 0", color: "#0f172a", fontSize: "18px" }}>{user.name}</h3>
+            <p style={{ margin: 0, color: "#64748b", fontSize: "13px" }}>{user.email}</p>
+          </div>
+
+          <div style={profileDetailsSection}>
+            <div style={grid}>
+              <div style={detailField}>
+                <span style={detailLabel}>Roll Number</span>
+                <span style={detailValue}>{user.roll || "—"}</span>
+              </div>
+              <div style={detailField}>
+                <span style={detailLabel}>Branch / Stream</span>
+                <span style={detailValue}>{user.branch || "—"}</span>
+              </div>
+              <div style={detailField}>
+                <span style={detailLabel}>Academic Batch</span>
+                <span style={detailValue}>{user.batch || "—"}</span>
+              </div>
+              <div style={detailField}>
+                <span style={detailLabel}>Current Semester</span>
+                <span style={detailValue}>{user.semester || "—"}</span>
+              </div>
+              <div style={detailField}>
+                <span style={detailLabel}>Mobile Number</span>
+                <span style={detailValue}>{user.mobile || "—"}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -145,27 +170,27 @@ export default function StudentDashboard() {
       {isEditing && (
         <div style={modalOverlay}>
           <div style={modal}>
-            <h2 style={{marginTop: 0, borderBottom: "1px solid #e2e8f0", paddingBottom: "15px"}}>Edit Profile</h2>
+            <h2 style={{ marginTop: 0, borderBottom: "1px solid #e2e8f0", paddingBottom: "15px" }}>Edit Profile</h2>
             <form onSubmit={submitEdit} style={form}>
               <label style={label}>Name</label>
               <input name="name" value={editForm.name} onChange={handleEditChange} required style={input} />
-              
+
               <label style={label}>Roll No</label>
               <input name="roll" value={editForm.roll} onChange={handleEditChange} required style={input} />
-              
+
               <label style={label}>Branch</label>
               <input name="branch" value={editForm.branch} onChange={handleEditChange} required style={input} />
-              
+
               <label style={label}>Batch (e.g. 2022-2026)</label>
               <input name="batch" value={editForm.batch} onChange={handleEditChange} required style={input} />
-              
+
               <label style={label}>Semester</label>
               <input name="semester" value={editForm.semester} onChange={handleEditChange} required style={input} />
-              
+
               <label style={label}>Mobile</label>
               <input name="mobile" value={editForm.mobile} onChange={handleEditChange} style={input} />
-              
-              <div style={{display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "10px"}}>
+
+              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "10px" }}>
                 <button type="button" onClick={() => setIsEditing(false)} style={cancelBtn}>Cancel</button>
                 <button type="submit" style={btn}>Save Changes</button>
               </div>
@@ -239,13 +264,84 @@ const statusStyle = (status) => ({
     status === "Approved"
       ? "#22c55e"
       : status === "Pending"
-      ? "#f59e0b"
-      : "#ef4444",
+        ? "#f59e0b"
+        : "#ef4444",
 });
 
 const editBtn = {
-  padding: "8px 16px", background: "#f8fafc", color: "#2563eb", border: "1px solid #cbd5e1",
-  borderRadius: "8px", cursor: "pointer", fontWeight: "600", fontSize: "14px"
+  padding: "6px 12px",
+  background: "linear-gradient(135deg, #3b82f6, #2563eb)",
+  color: "white",
+  border: "none",
+  borderRadius: "6px",
+  cursor: "pointer",
+  fontWeight: "600",
+  fontSize: "12px",
+  boxShadow: "0 2px 4px rgba(37, 99, 235, 0.2)",
+  transition: "transform 0.1s ease"
+};
+
+const profileLayout = {
+  display: "flex",
+  gap: "30px",
+  flexWrap: "wrap",
+};
+
+const profileAvatarSection = {
+  flex: "1 1 200px",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "20px",
+  background: "#f8fafc",
+  borderRadius: "12px",
+  border: "1px solid #e2e8f0",
+};
+
+const avatarCircle = {
+  width: "70px",
+  height: "70px",
+  borderRadius: "50%",
+  background: "linear-gradient(135deg, #3b82f6, #2563eb)",
+  color: "white",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: "24px",
+  fontWeight: "bold",
+  boxShadow: "0 4px 10px rgba(37, 99, 235, 0.2)",
+};
+
+const profileDetailsSection = {
+  flex: "2 1 400px",
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "center",
+};
+
+const detailField = {
+  background: "#f8fafc",
+  padding: "12px 15px",
+  borderRadius: "8px",
+  border: "1px solid #e2e8f0",
+  display: "flex",
+  flexDirection: "column",
+  gap: "4px",
+};
+
+const detailLabel = {
+  fontSize: "11px",
+  fontWeight: "bold",
+  textTransform: "uppercase",
+  color: "#64748b",
+  letterSpacing: "0.5px",
+};
+
+const detailValue = {
+  fontSize: "14px",
+  fontWeight: "600",
+  color: "#1e293b",
 };
 
 const modalOverlay = {

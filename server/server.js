@@ -5,11 +5,93 @@ const db = require("./db");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const http = require("http");
+const { Server } = require("socket.io");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE"]
+  }
+});
+
+// Socket connection & active users map
+const activeUsers = {}; // email -> socket.id
+
+io.on("connection", (socket) => {
+  console.log("Socket connected:", socket.id);
+
+  socket.on("register", (email) => {
+    if (email) {
+      activeUsers[email] = socket.id;
+      console.log(`Registered socket for ${email}: ${socket.id}`);
+    }
+  });
+
+  socket.on("disconnect", () => {
+    for (const email in activeUsers) {
+      if (activeUsers[email] === socket.id) {
+        delete activeUsers[email];
+        console.log(`Unregistered socket for ${email}`);
+        break;
+      }
+    }
+  });
+});
+
+// Initialize database tables
+const initDB = () => {
+  const createNotificationsTable = `
+    CREATE TABLE IF NOT EXISTS notifications (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      recipientEmail VARCHAR(100) NOT NULL,
+      message TEXT NOT NULL,
+      type VARCHAR(50) NOT NULL,
+      isRead TINYINT(1) DEFAULT 0,
+      createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `;
+  db.query(createNotificationsTable, (err) => {
+    if (err) {
+      console.error("Error creating notifications table:", err);
+    } else {
+      console.log("Notifications table verified/created ✅");
+    }
+  });
+};
+initDB();
+
+// Helper to notify a user
+const notifyUser = (recipientEmail, notificationData) => {
+  const sql = "INSERT INTO notifications (recipientEmail, message, type) VALUES (?, ?, ?)";
+  db.query(sql, [recipientEmail, notificationData.message, notificationData.type], (err, result) => {
+    if (err) {
+      console.error("Error saving notification to DB:", err);
+      return;
+    }
+
+    const newNotification = {
+      id: result.insertId,
+      recipientEmail,
+      message: notificationData.message,
+      type: notificationData.type,
+      isRead: 0,
+      createdAt: new Date()
+    };
+
+    const socketId = activeUsers[recipientEmail];
+    if (socketId) {
+      io.to(socketId).emit("new_notification", newNotification);
+      console.log(`Sent real-time notification to ${recipientEmail}`);
+    }
+  });
+};
 
 // Ensure uploads folder exists
 if (!fs.existsSync(path.join(__dirname, 'uploads'))) {
@@ -210,6 +292,19 @@ app.post("/submit-activity", upload.single("file"), (req, res) => {
       }
 
       res.json({ message: "Activity Submitted Successfully ✅" });
+
+      // Notify faculty of the same branch
+      const facultySql = "SELECT email FROM user WHERE role='faculty' AND branch=?";
+      db.query(facultySql, [branch], (err2, faculties) => {
+        if (!err2 && faculties) {
+          faculties.forEach(fac => {
+            notifyUser(fac.email, {
+              message: `Student ${studentName} (${roll || "N/A"}) has submitted a new activity: "${title}"`,
+              type: "activity_submitted"
+            });
+          });
+        }
+      });
     }
   );
 });
@@ -224,6 +319,41 @@ app.get("/my-activities", (req, res) => {
 
   db.query(sql, [email], (err, result) => {
     res.json(result);
+  });
+});
+
+
+/* ================= GET NOTIFICATIONS ================= */
+app.get("/notifications", (req, res) => {
+  const { email } = req.query;
+  if (!email) return res.status(400).json({ message: "Email required" });
+
+  const sql = "SELECT * FROM notifications WHERE recipientEmail=? ORDER BY id DESC";
+  db.query(sql, [email], (err, result) => {
+    if (err) return res.status(500).json({ message: "Database Error" });
+    res.json(result);
+  });
+});
+
+/* ================= MARK NOTIFICATION AS READ ================= */
+app.put("/notifications/:id/read", (req, res) => {
+  const { id } = req.params;
+  const sql = "UPDATE notifications SET isRead=1 WHERE id=?";
+  db.query(sql, [id], (err) => {
+    if (err) return res.status(500).json({ message: "Database Error" });
+    res.json({ success: true, message: "Notification marked as read" });
+  });
+});
+
+/* ================= MARK ALL NOTIFICATIONS AS READ ================= */
+app.put("/notifications/read-all", (req, res) => {
+  const { email } = req.query;
+  if (!email) return res.status(400).json({ message: "Email required" });
+
+  const sql = "UPDATE notifications SET isRead=1 WHERE recipientEmail=?";
+  db.query(sql, [email], (err) => {
+    if (err) return res.status(500).json({ message: "Database Error" });
+    res.json({ success: true, message: "All notifications marked as read" });
   });
 });
 
@@ -261,8 +391,36 @@ app.put("/update-status/:id", (req, res) => {
     WHERE id=?
   `;
 
-  db.query(sql, [status, remarks, id], () => {
+  db.query(sql, [status, remarks, id], (err) => {
+    if (err) return res.json({ message: "Database Error ❌" });
     res.json({ message: "Status updated successfully ✅" });
+
+    // Notify Student and Admin
+    const getActivitySql = "SELECT studentName, studentEmail, roll, title FROM activities WHERE id=?";
+    db.query(getActivitySql, [id], (err2, actResult) => {
+      if (!err2 && actResult && actResult.length > 0) {
+        const act = actResult[0];
+
+        // 1. Notify Student
+        notifyUser(act.studentEmail, {
+          message: `Your activity "${act.title}" has been ${status.toLowerCase()} by the faculty.${remarks ? ' Remarks: ' + remarks : ''}`,
+          type: "activity_verified"
+        });
+
+        // 2. Notify Admins
+        const adminSql = "SELECT email FROM user WHERE role='admin'";
+        db.query(adminSql, (err3, admins) => {
+          if (!err3 && admins) {
+            admins.forEach(admin => {
+              notifyUser(admin.email, {
+                message: `Faculty has ${status.toLowerCase()} the activity "${act.title}" submitted by ${act.studentName} (${act.roll || "N/A"}).`,
+                type: "activity_verified"
+              });
+            });
+          }
+        });
+      }
+    });
   });
 });
 
@@ -281,24 +439,58 @@ app.delete("/delete-activity/:id", (req, res) => {
 
 
 /* ================= EDIT ACTIVITY ================= */
-app.put("/edit-activity/:id", (req, res) => {
+app.put("/edit-activity/:id", upload.array("files", 10), (req, res) => {
   const { id } = req.params;
-  const { title, type, description, date, organizer, mode, position } = req.body;
+  const { title, type, description, date, organizer, mode, position, proofLink } = req.body;
+
+  let finalProofLink = proofLink || "";
+  if (req.files && req.files.length > 0) {
+    const newFiles = req.files.map(f => f.filename).join(",");
+    if (finalProofLink) {
+      // Split and clean existing proof links to ensure no empty values
+      const existing = finalProofLink.split(",").map(f => f.trim()).filter(Boolean);
+      existing.push(...req.files.map(f => f.filename));
+      finalProofLink = existing.join(",");
+    } else {
+      finalProofLink = newFiles;
+    }
+  }
 
   const sql = `
     UPDATE activities 
-    SET title=?, type=?, description=?, date=?, organizer=?, mode=?, position=?
+    SET title=?, type=?, description=?, date=?, organizer=?, mode=?, position=?, proofLink=?, status='Pending', remarks=''
     WHERE id=?
   `;
 
-  db.query(sql, [title, type, description, date, organizer || null, mode || null, position || null, id], (err) => {
+  db.query(sql, [title, type, description, date, organizer || null, mode || null, position || null, finalProofLink || null, id], (err) => {
     if (err) {
       console.log(err);
       return res.json({ message: "Database Error ❌" });
     }
     res.json({ message: "Activity updated successfully ✅" });
+
+    // Fetch details to notify branch faculty
+    const getActivitySql = "SELECT studentName, studentEmail, roll, branch, title FROM activities WHERE id=?";
+    db.query(getActivitySql, [id], (err2, actResult) => {
+      if (!err2 && actResult && actResult.length > 0) {
+        const act = actResult[0];
+
+        const facultySql = "SELECT email FROM user WHERE role='faculty' AND branch=?";
+        db.query(facultySql, [act.branch], (err3, faculties) => {
+          if (!err3 && faculties) {
+            faculties.forEach(fac => {
+              notifyUser(fac.email, {
+                message: `Student ${act.studentName} (${act.roll || "N/A"}) has updated the activity: "${title || act.title}"`,
+                type: "activity_updated"
+              });
+            });
+          }
+        });
+      }
+    });
   });
 });
+
 
 
 /* ================= GET ALL STUDENTS ================= */
@@ -395,6 +587,6 @@ app.get("/verify-portfolio/:token", (req, res) => {
 });
 
 /* ================= SERVER ================= */
-app.listen(5000, () => {
+server.listen(5000, () => {
   console.log("Server running on port 5000 🚀");
 });

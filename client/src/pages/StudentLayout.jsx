@@ -1,4 +1,5 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import Header from "../components/Header";
 
 export default function StudentLayout() {
   const navigate = useNavigate();
@@ -148,6 +149,7 @@ export default function StudentLayout() {
           overflowY: "auto"     // 🔥 ONLY CONTENT SCROLL
         }}
       >
+        <Header />
         <Outlet />
       </div>
     </div>

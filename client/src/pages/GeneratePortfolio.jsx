@@ -140,15 +140,17 @@ export default function GeneratePortfolio() {
   const printRef = useRef();
   const handlePrint = () => window.print();
 
-  const getDocumentInfo = (link) => {
-    if (!link) return null;
-    if (link.startsWith("http")) return { name: "View Link", url: link };
-    if (link.match(/^\d+-/)) {
-      const parts = link.split("-");
-      const name = parts.slice(1).join("-");
-      return { name: name, url: `http://localhost:5000/uploads/${link}` };
-    }
-    return { name: "View Link", url: `https://${link}` };
+  const getDocuments = (proofLink) => {
+    if (!proofLink) return [];
+    return proofLink.split(",").map(link => link.trim()).filter(Boolean).map(link => {
+      if (link.startsWith("http")) return { name: "View Link", url: link };
+      if (link.match(/^\d+-/)) {
+        const parts = link.split("-");
+        const name = parts.slice(1).join("-");
+        return { name: name, url: `http://localhost:5000/uploads/${link}` };
+      }
+      return { name: "View Link", url: `https://${link}` };
+    });
   };
 
   const isImage = (url) => {
@@ -502,17 +504,23 @@ export default function GeneratePortfolio() {
                   <b>Attached Documents / Certificates:</b>
                   <div style={{ display: "flex", flexDirection: "column", gap: "15px", marginTop: "10px" }}>
                     {allActivitiesForReport.filter(a => a.proofLink).map((a, i) => {
-                      const docInfo = getDocumentInfo(a.proofLink);
+                      const docs = getDocuments(a.proofLink);
                       return (
                         <div key={i} style={{ padding: "10px", border: "1px solid #ccc" }}>
                           <p style={{ margin: "0 0 5px 0" }}><b>Activity:</b> {a.title}</p>
-                          {isImage(docInfo.url) ? (
-                            <img src={docInfo.url} alt="Certificate" style={{ maxWidth: "100%", maxHeight: "300px", objectFit: "contain" }} />
-                          ) : (
-                            <a href={docInfo.url} target="_blank" rel="noopener noreferrer" style={{ color: "blue", textDecoration: "underline" }}>
-                              📄 View Document
-                            </a>
-                          )}
+                          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                            {docs.map((docInfo, idx) => (
+                              <div key={idx} style={{ marginTop: "5px" }}>
+                                {isImage(docInfo.url) ? (
+                                  <img src={docInfo.url} alt="Certificate" style={{ maxWidth: "100%", maxHeight: "300px", objectFit: "contain" }} />
+                                ) : (
+                                  <a href={docInfo.url} target="_blank" rel="noopener noreferrer" style={{ color: "blue", textDecoration: "underline" }}>
+                                    📄 View Document: {docInfo.name}
+                                  </a>
+                                )}
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       );
                     })}
