@@ -205,14 +205,27 @@ npm run dev
 
 ## 📸 Screenshots
 
-Here are some relative-path screenshot placeholders for the main layouts and pages implemented in this project:
+Here are the screenshots for the main layouts and pages implemented in this project:
 
-* **Authentication Page (Login & Register):** `./screenshots/auth_page.png`
-* **Student Dashboard:** `./screenshots/student_dashboard.png`
-* **Submit Activity Form:** `./screenshots/submit_activity.png`
-* **Faculty Review & Verification Interface:** `./screenshots/faculty_verification.png`
-* **Admin Dashboard:** `./screenshots/admin_dashboard.png`
-* **Digital Portfolio Generator:** `./screenshots/portfolio_generator.png`
+### Authentication Page (Login)
+
+![Authentication Page (Login)](screenshots/auth_page.png)
+
+### Authentication Page (Register)
+
+![Authentication Page (Register)](screenshots/auth_register.png)
+
+### Student Dashboard
+
+![Student Dashboard](screenshots/student_dashboard.png)
+
+### Faculty Verification
+
+![Faculty Verification](screenshots/faculty_verification.png)
+
+### Admin Dashboard
+
+![Admin Dashboard](screenshots/admin_dashboard.png)
 
 ---
 
