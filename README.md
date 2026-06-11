@@ -209,23 +209,23 @@ Here are the screenshots for the main layouts and pages implemented in this proj
 
 ### Authentication Page (Login)
 
-![Authentication Page (Login)](screenshots/auth_page.png)
+[![Authentication Page (Login)](./screenshots/auth_page.png)](./screenshots/auth_page.png)
 
 ### Authentication Page (Register)
 
-![Authentication Page (Register)](screenshots/auth_register.png)
+[![Authentication Page (Register)](./screenshots/auth_register.png)](./screenshots/auth_register.png)
 
 ### Student Dashboard
 
-![Student Dashboard](screenshots/student_dashboard.png)
+[![Student Dashboard](./screenshots/student_dashboard.png)](./screenshots/student_dashboard.png)
 
 ### Faculty Verification
 
-![Faculty Verification](screenshots/faculty_verification.png)
+[![Faculty Verification](./screenshots/faculty_verification.png)](./screenshots/faculty_verification.png)
 
 ### Admin Dashboard
 
-![Admin Dashboard](screenshots/admin_dashboard.png)
+[![Admin Dashboard](./screenshots/admin_dashboard.png)](./screenshots/admin_dashboard.png)
 
 ---
 
