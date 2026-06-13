@@ -110,6 +110,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 /* ================= REGISTER ================= */
+/* ================= REGISTER ================= */
 app.post("/register", async (req, res) => {
 
   const {
@@ -135,7 +136,13 @@ app.post("/register", async (req, res) => {
 
     db.query(checkSql, [email], async (err, data) => {
 
-      if (err) return res.json({ message: "Database error ❌" });
+      if (err) {
+        console.error("REGISTER CHECK ERROR:", err);
+        return res.status(500).json({
+          message: "Database error ❌",
+          error: err.message
+        });
+      }
 
       if (data.length > 0) {
         return res.json({ message: "Email already exists ❌" });
@@ -144,8 +151,8 @@ app.post("/register", async (req, res) => {
       const hashedPassword = await bcrypt.hash(password, 10);
 
       const insertSql = `
-        INSERT INTO user 
-        (name, roll, email, password, role, branch, batch, mobile, facultyId, adminCode, semester) 
+        INSERT INTO user
+        (name, roll, email, password, role, branch, batch, mobile, facultyId, adminCode, semester)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `;
 
@@ -164,16 +171,29 @@ app.post("/register", async (req, res) => {
           adminCode || null,
           semester || null
         ],
-        () => res.json({ message: "Registration successful ✅" })
+        (err2) => {
+
+          if (err2) {
+            console.error("REGISTER INSERT ERROR:", err2);
+            return res.status(500).json({
+              message: "Database error ❌",
+              error: err2.message
+            });
+          }
+
+          res.json({ message: "Registration successful ✅" });
+        }
       );
     });
 
-  } catch {
-    res.json({ message: "Server error ❌" });
+  } catch (err) {
+    console.error("REGISTER SERVER ERROR:", err);
+    res.status(500).json({
+      message: "Server error ❌",
+      error: err.message
+    });
   }
 });
-
-
 /* ================= LOGIN ================= */
 app.post("/login", (req, res) => {
 
