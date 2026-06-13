@@ -45,7 +45,7 @@ export default function SubmitActivity() {
         formData.append("file", form.files[0]);
       }
 
-      const res = await fetch("http://localhost:5000/submit-activity", {
+      const res = await fetch("https://student-activities-record-system.onrender.com/submit-activity", {
         method: "POST",
         body: formData
       });

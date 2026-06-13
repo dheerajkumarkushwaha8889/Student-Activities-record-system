@@ -19,7 +19,7 @@ export default function AddFaculty() {
   // FETCH ALL FACULTIES
   const fetchFaculties = async () => {
     try {
-      const res = await fetch("http://localhost:5000/all-faculties");
+      const res = await fetch("https://student-activities-record-system.onrender.com/all-faculties");
       const data = await res.json();
       setFaculties(data);
     } catch (err) {
@@ -38,7 +38,7 @@ export default function AddFaculty() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:5000/register", {
+      const res = await fetch("https://student-activities-record-system.onrender.com/register", {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(formData),
       });
       const data = await res.json();
@@ -63,7 +63,7 @@ export default function AddFaculty() {
   const submitEdit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`http://localhost:5000/edit-faculty/${editingFaculty.id}`, {
+      const res = await fetch(`https://student-activities-record-system.onrender.com/edit-faculty/${editingFaculty.id}`, {
         method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(editForm),
       });
       const data = await res.json();
@@ -79,7 +79,7 @@ export default function AddFaculty() {
   const deleteFaculty = async (id) => {
     if(!window.confirm("Are you sure you want to delete this faculty?")) return;
     try {
-      const res = await fetch(`http://localhost:5000/delete-faculty/${id}`, { method: "DELETE" });
+      const res = await fetch(`https://student-activities-record-system.onrender.com/delete-faculty/${id}`, { method: "DELETE" });
       const data = await res.json();
       alert(data.message);
       fetchFaculties();

@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 
 export default function GeneratePortfolio() {
+  const currentUser = JSON.parse(localStorage.getItem("user")) || {};
   const [filters, setFilters] = useState({
     name: "",
     branch: "",
@@ -11,6 +12,7 @@ export default function GeneratePortfolio() {
   const [activities, setActivities] = useState([]);
   const [filteredStudents, setFilteredStudents] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [faculties, setFaculties] = useState([]);
   
   // NEW STATES FOR REVIEW & EDIT
   const [reviewMode, setReviewMode] = useState(false);
@@ -23,12 +25,14 @@ export default function GeneratePortfolio() {
   // FETCH DATA
   useEffect(() => {
     Promise.all([
-      fetch("http://localhost:5000/all-students").then((res) => res.json()),
-      fetch("http://localhost:5000/all-activities").then((res) => res.json())
+      fetch("https://student-activities-record-system.onrender.com/all-students").then((res) => res.json()),
+      fetch("https://student-activities-record-system.onrender.com/all-activities").then((res) => res.json()),
+      fetch("https://student-activities-record-system.onrender.com/all-faculties").then((res) => res.json())
     ])
-      .then(([studentsData, activitiesData]) => {
+      .then(([studentsData, activitiesData, facultiesData]) => {
         setStudents(studentsData);
         setActivities(activitiesData);
+        setFaculties(facultiesData || []);
       })
       .catch((err) => console.log(err));
   }, []);
@@ -72,7 +76,7 @@ export default function GeneratePortfolio() {
     if (!window.confirm("Are you sure you want to delete this activity? This cannot be undone.")) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/delete-activity/${id}`, { method: "DELETE" });
+      const res = await fetch(`https://student-activities-record-system.onrender.com/delete-activity/${id}`, { method: "DELETE" });
       const data = await res.json();
       alert(data.message);
       setActivities(prev => prev.filter(a => a.id !== id));
@@ -102,7 +106,7 @@ export default function GeneratePortfolio() {
   const submitEdit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`http://localhost:5000/edit-activity/${editingActivity.id}`, {
+      const res = await fetch(`https://student-activities-record-system.onrender.com/edit-activity/${editingActivity.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editForm)
@@ -147,7 +151,20 @@ export default function GeneratePortfolio() {
       if (link.match(/^\d+-/)) {
         const parts = link.split("-");
         const name = parts.slice(1).join("-");
-        return { name: name, url: `http://localhost:5000/uploads/${link}` };
+        const timestamp = parseInt(parts[0], 10);
+        let uploadedAt = "";
+        if (!isNaN(timestamp)) {
+          const dateObj = new Date(timestamp);
+          uploadedAt = dateObj.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          }) + " " + dateObj.toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        }
+        return { name: name, url: `https://student-activities-record-system.onrender.com/uploads/${link}`, uploadedAt: uploadedAt };
       }
       return { name: "View Link", url: `https://${link}` };
     });
@@ -512,10 +529,13 @@ export default function GeneratePortfolio() {
                             {docs.map((docInfo, idx) => (
                               <div key={idx} style={{ marginTop: "5px" }}>
                                 {isImage(docInfo.url) ? (
-                                  <img src={docInfo.url} alt="Certificate" style={{ maxWidth: "100%", maxHeight: "300px", objectFit: "contain" }} />
+                                  <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                                    <img src={docInfo.url} alt="Certificate" style={{ maxWidth: "100%", maxHeight: "300px", objectFit: "contain" }} />
+                                    {docInfo.uploadedAt && <span style={{ fontSize: "11px", color: "#64748b" }}>Uploaded on {docInfo.uploadedAt}</span>}
+                                  </div>
                                 ) : (
                                   <a href={docInfo.url} target="_blank" rel="noopener noreferrer" style={{ color: "blue", textDecoration: "underline" }}>
-                                    📄 View Document: {docInfo.name}
+                                    📄 View Document: {docInfo.name} {docInfo.uploadedAt && `(Uploaded: ${docInfo.uploadedAt})`}
                                   </a>
                                 )}
                               </div>
@@ -529,9 +549,25 @@ export default function GeneratePortfolio() {
               )}
             </div>
 
-            <div style={{ marginTop: "60px", display: "flex", justifyContent: "space-between" }}>
-              <div style={{ borderTop: "1px solid black", paddingTop: "5px", width: "200px", textAlign: "center" }}>
-                Faculty Signature
+            <div style={{ marginTop: "60px", display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "200px" }}>
+                {(() => {
+                  const studentBranch = selectedStudent ? selectedStudent.branch : "";
+                  const branchFaculty = faculties.find(f => f.branch === studentBranch) || {};
+                  const sig = branchFaculty.signature || (currentUser.role === "faculty" ? currentUser.signature : null);
+                  return sig ? (
+                    <img 
+                      src={`https://student-activities-record-system.onrender.com/uploads/${sig}`} 
+                      alt="Faculty Signature" 
+                      style={{ height: "50px", objectFit: "contain", marginBottom: "5px" }} 
+                    />
+                  ) : (
+                    <div style={{ height: "55px" }}></div>
+                  );
+                })()}
+                <div style={{ borderTop: "1px solid black", paddingTop: "5px", width: "100%", textAlign: "center" }}>
+                  Faculty Signature
+                </div>
               </div>
             </div>
           </div>

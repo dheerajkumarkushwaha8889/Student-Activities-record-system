@@ -19,7 +19,7 @@ export default function StudentDashboard() {
   const submitEdit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`http://localhost:5000/edit-student/${user.email}`, {
+      const res = await fetch(`https://student-activities-record-system.onrender.com/edit-student/${user.email}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editForm)
@@ -42,7 +42,7 @@ export default function StudentDashboard() {
   useEffect(() => {
     if (!user.email) return;
 
-    fetch(`http://localhost:5000/my-activities?email=${user.email}`)
+    fetch(`https://student-activities-record-system.onrender.com/my-activities?email=${user.email}`)
       .then((res) => res.json())
       .then((data) => {
         setActivities(data);

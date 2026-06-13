@@ -121,8 +121,8 @@ function AuthPage() {
     try {
       const url =
         mode === "login"
-          ? "http://localhost:5000/login"
-          : "http://localhost:5000/register";
+          ? "https://student-activities-record-system.onrender.com/login"
+          : "https://student-activities-record-system.onrender.com/register";
 
       const res = await fetch(url, {
         method: "POST",

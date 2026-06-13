@@ -1,5 +1,5 @@
 import { io } from "socket.io-client";
 
-const socket = io("http://localhost:5000", { autoConnect: false });
+const socket = io("https://student-activities-record-system.onrender.com", { autoConnect: false });
 
 export default socket;

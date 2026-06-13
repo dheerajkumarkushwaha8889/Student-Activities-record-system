@@ -5,13 +5,45 @@ export default function VerifyActivities() {
   const [activities, setActivities] = useState([]);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(null);
+  const user = JSON.parse(localStorage.getItem("user")) || {};
+  const [signatureFile, setSignatureFile] = useState(null);
+  const [uploadMessage, setUploadMessage] = useState("");
+  const [showSignatureSection, setShowSignatureSection] = useState(false);
+  const [currentUser, setCurrentUser] = useState(user);
+
+  const handleSignatureUpload = async (e) => {
+    e.preventDefault();
+    if (!signatureFile) return;
+
+    const formData = new FormData();
+    formData.append("signature", signatureFile);
+    formData.append("email", currentUser.email || user.email);
+
+    try {
+      const res = await fetch("https://student-activities-record-system.onrender.com/upload-signature", {
+        method: "POST",
+        body: formData
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setUploadMessage("Signature uploaded successfully! ✅");
+        const updatedUser = { ...user, signature: data.signature };
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+        setCurrentUser(updatedUser);
+      } else {
+        setUploadMessage(data.message || "Failed to upload signature. ❌");
+      }
+    } catch (err) {
+      console.error(err);
+      setUploadMessage("Error uploading signature. ❌");
+    }
+  };
 
   // FETCH DATA
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user")) || {};
     const branchQuery = user.branch ? `?branch=${user.branch}` : "";
     
-    fetch(`http://localhost:5000/all-activities${branchQuery}`)
+    fetch(`https://student-activities-record-system.onrender.com/all-activities${branchQuery}`)
       .then(res => res.json())
       .then(data => setActivities(data))
       .catch(err => console.log(err));
@@ -24,7 +56,20 @@ export default function VerifyActivities() {
       if (link.match(/^\d+-/)) {
         const parts = link.split("-");
         const name = parts.slice(1).join("-");
-        return { name: name, url: `http://localhost:5000/uploads/${link}` };
+        const timestamp = parseInt(parts[0], 10);
+        let uploadedAt = "";
+        if (!isNaN(timestamp)) {
+          const dateObj = new Date(timestamp);
+          uploadedAt = dateObj.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          }) + " " + dateObj.toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        }
+        return { name: name, url: `https://student-activities-record-system.onrender.com/uploads/${link}`, uploadedAt: uploadedAt };
       }
       return { name: "View Link", url: `https://${link}` };
     });
@@ -40,7 +85,7 @@ export default function VerifyActivities() {
   const handleAction = (id, status) => {
     const remarks = prompt("Enter remarks:");
 
-    fetch(`http://localhost:5000/update-status/${id}`, {
+    fetch(`https://student-activities-record-system.onrender.com/update-status/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json"
@@ -118,28 +163,15 @@ export default function VerifyActivities() {
 
                       <button
                         style={viewBtn}
-                        onClick={() => setSelected(a)}
+                        onClick={() => {
+                          setSelected(a);
+                          // Reset signature section toggle when opening new activity
+                          setShowSignatureSection(false);
+                          setUploadMessage("");
+                        }}
                       >
                         👁 View
                       </button>
-
-                      {a.status === "Pending" && (
-                        <>
-                          <button
-                            style={approveBtn}
-                            onClick={() => handleAction(a.id, "Approved")}
-                          >
-                            ✔
-                          </button>
-
-                          <button
-                            style={rejectBtn}
-                            onClick={() => handleAction(a.id, "Rejected")}
-                          >
-                            ✖
-                          </button>
-                        </>
-                      )}
 
                     </div>
                   </td>
@@ -203,7 +235,10 @@ export default function VerifyActivities() {
                 <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                   {getDocuments(selected.proofLink).map((doc, idx) => (
                     <div key={idx} style={documentBox}>
-                      <p style={{ margin: 0, color: "#475569", fontSize: "14px", marginBottom: "8px" }}>Supporting document #{idx + 1}:</p>
+                      <p style={{ margin: 0, color: "#475569", fontSize: "14px", marginBottom: "8px" }}>
+                        Supporting document #{idx + 1}
+                        {doc.uploadedAt && <span style={{ fontSize: "12px", color: "#64748b", marginLeft: "8px" }}>• Uploaded on {doc.uploadedAt}</span>}
+                      </p>
                       <a 
                         href={doc.url} 
                         target="_blank" 
@@ -220,10 +255,79 @@ export default function VerifyActivities() {
               )}
             </div>
 
+            {/* SIGNATURE SECTION (TOGGLED) */}
+            {showSignatureSection && (
+              <div style={inlineSigSection}>
+                <h4 style={{ margin: "0 0 10px 0", color: "#1e293b", fontSize: "16px" }}>✍️ Faculty Signature Management</h4>
+                {currentUser.signature ? (
+                  <div style={{ marginBottom: "15px" }}>
+                    <p style={{ margin: "0 0 5px 0", fontSize: "13px", color: "#64748b" }}>Current Signature Preview:</p>
+                    <img 
+                      src={`https://student-activities-record-system.onrender.com/uploads/${currentUser.signature}`} 
+                      alt="Faculty Signature" 
+                      style={{ height: "65px", border: "1px solid #cbd5e1", borderRadius: "8px", padding: "5px", background: "white" }} 
+                    />
+                  </div>
+                ) : (
+                  <p style={{ color: "#ef4444", fontSize: "14px", margin: "0 0 12px 0" }}>No signature uploaded yet.</p>
+                )}
+                
+                <form onSubmit={handleSignatureUpload} style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={(e) => setSignatureFile(e.target.files[0])} 
+                    required
+                    style={{ fontSize: "13px" }}
+                  />
+                  <button type="submit" style={inlineUploadBtn}>Upload</button>
+                </form>
+                {uploadMessage && <p style={{ margin: "8px 0 0 0", fontSize: "13px", color: uploadMessage.includes("successfully") ? "green" : "red" }}>{uploadMessage}</p>}
+              </div>
+            )}
+
             <div style={modalFooter}>
-              <button style={closeBtn} onClick={() => setSelected(null)}>
-                Close
-              </button>
+              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", width: "100%", justifyContent: "flex-end" }}>
+                
+                {/* SIGNATURE BUTTON */}
+                <button 
+                  style={sigBtnStyle} 
+                  onClick={() => setShowSignatureSection(!showSignatureSection)}
+                >
+                  ✍️ Signature
+                </button>
+
+                {/* APPROVE BUTTON */}
+                {selected.status === "Pending" && (
+                  <button 
+                    style={approveActionBtn} 
+                    onClick={() => {
+                      handleAction(selected.id, "Approved");
+                      setSelected(null);
+                    }}
+                  >
+                    ✔ Approve
+                  </button>
+                )}
+
+                {/* REJECT BUTTON */}
+                {selected.status === "Pending" && (
+                  <button 
+                    style={rejectActionBtn} 
+                    onClick={() => {
+                      handleAction(selected.id, "Rejected");
+                      setSelected(null);
+                    }}
+                  >
+                    ✖ Reject
+                  </button>
+                )}
+
+                {/* CLOSE BUTTON */}
+                <button style={closeBtn} onClick={() => setSelected(null)}>
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -450,4 +554,65 @@ const closeBtn = {
   cursor: "pointer",
   fontWeight: "600",
   transition: "background 0.2s"
+};
+
+const sigBtnStyle = {
+  padding: "10px 18px",
+  background: "#f1f5f9",
+  color: "#475569",
+  border: "1px solid #cbd5e1",
+  borderRadius: "8px",
+  cursor: "pointer",
+  fontWeight: "bold",
+  fontSize: "14px",
+  display: "flex",
+  alignItems: "center",
+  gap: "5px"
+};
+
+const approveActionBtn = {
+  padding: "10px 18px",
+  background: "#22c55e",
+  color: "white",
+  border: "none",
+  borderRadius: "8px",
+  cursor: "pointer",
+  fontWeight: "bold",
+  fontSize: "14px",
+  display: "flex",
+  alignItems: "center",
+  gap: "5px"
+};
+
+const rejectActionBtn = {
+  padding: "10px 18px",
+  background: "#ef4444",
+  color: "white",
+  border: "none",
+  borderRadius: "8px",
+  cursor: "pointer",
+  fontWeight: "bold",
+  fontSize: "14px",
+  display: "flex",
+  alignItems: "center",
+  gap: "5px"
+};
+
+const inlineSigSection = {
+  padding: "20px",
+  background: "#f1f5f9",
+  borderTop: "1px solid #e2e8f0",
+  borderBottom: "1px solid #e2e8f0",
+  textAlign: "left"
+};
+
+const inlineUploadBtn = {
+  background: "#2563eb",
+  color: "white",
+  border: "none",
+  padding: "6px 12px",
+  borderRadius: "6px",
+  cursor: "pointer",
+  fontWeight: "bold",
+  fontSize: "13px"
 };

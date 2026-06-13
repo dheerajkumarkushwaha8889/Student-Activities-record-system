@@ -36,7 +36,7 @@ export default function Header() {
     socket.emit("register", user.email);
 
     // Fetch initial notifications
-    fetch(`http://localhost:5000/notifications?email=${user.email}`)
+    fetch(`https://student-activities-record-system.onrender.com/notifications?email=${user.email}`)
       .then((res) => res.json())
       .then((data) => setNotifications(data))
       .catch((err) => console.error("Error fetching notifications:", err));
@@ -82,7 +82,7 @@ export default function Header() {
 
   const markAsRead = async (id) => {
     try {
-      await fetch(`http://localhost:5000/notifications/${id}/read`, {
+      await fetch(`https://student-activities-record-system.onrender.com/notifications/${id}/read`, {
         method: "PUT",
       });
       setNotifications((prev) =>
@@ -95,7 +95,7 @@ export default function Header() {
 
   const markAllAsRead = async () => {
     try {
-      await fetch(`http://localhost:5000/notifications/read-all?email=${user.email}`, {
+      await fetch(`https://student-activities-record-system.onrender.com/notifications/read-all?email=${user.email}`, {
         method: "PUT",
       });
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: 1 })));

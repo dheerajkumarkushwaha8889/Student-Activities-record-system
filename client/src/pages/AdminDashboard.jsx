@@ -9,7 +9,7 @@ export default function AdminDashboard() {
 
   // ✅ FETCH FROM DATABASE (IMPORTANT FIX)
   useEffect(() => {
-    fetch("http://localhost:5000/all-activities")
+    fetch("https://student-activities-record-system.onrender.com/all-activities")
       .then(res => res.json())
       .then(data => setData(data))
       .catch(err => console.log(err));

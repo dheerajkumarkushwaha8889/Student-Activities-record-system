@@ -2,17 +2,34 @@ import { useEffect, useState } from "react";
 
 export default function FacultyDashboard() {
   const [activities, setActivities] = useState([]);
+  const [currentUser, setCurrentUser] = useState(JSON.parse(localStorage.getItem("user")) || {});
 
-  // FETCH FROM BACKEND
+  // FETCH FROM BACKEND & UPDATE USER PROFILE
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user")) || {};
     const branchQuery = user.branch ? `?branch=${user.branch}` : "";
 
-    fetch(`http://localhost:5000/all-activities${branchQuery}`)
+    fetch(`https://student-activities-record-system.onrender.com/all-activities${branchQuery}`)
       .then((res) => res.json())
       .then((data) => setActivities(data))
       .catch((err) => console.log(err));
+
+    // Fetch latest profile details (to check signature)
+    if (user.email) {
+      fetch(`https://student-activities-record-system.onrender.com/user-profile?email=${user.email}`)
+        .then((res) => res.json())
+        .then((profileData) => {
+          if (profileData && !profileData.message) {
+            const updated = { ...user, ...profileData };
+            localStorage.setItem("user", JSON.stringify(updated));
+            setCurrentUser(updated);
+          }
+        })
+        .catch((err) => console.log(err));
+    }
   }, []);
+
+
 
   // STATS
   const stats = {
@@ -28,6 +45,25 @@ export default function FacultyDashboard() {
       {/* HEADER */}
       <h1 style={heading}>👨‍🏫 Faculty Dashboard</h1>
       <p style={subHeading}>Manage and verify student activities</p>
+
+      {/* FACULTY PROFILE */}
+      <div style={profileCard}>
+        <h2 style={{ margin: "0 0 15px 0", color: "#1e293b", fontSize: "20px" }}>📝 Faculty Profile</h2>
+        <div style={profileLayout}>
+          <div style={profileField}>
+            <strong>Name:</strong> {currentUser.name}
+          </div>
+          <div style={profileField}>
+            <strong>Email:</strong> {currentUser.email}
+          </div>
+          <div style={profileField}>
+            <strong>Branch:</strong> {currentUser.branch || "N/A"}
+          </div>
+          <div style={profileField}>
+            <strong>Faculty ID:</strong> {currentUser.facultyId || "N/A"}
+          </div>
+        </div>
+      </div>
 
       {/* STATS CARDS */}
       <div style={grid}>
@@ -173,3 +209,39 @@ const statusStyle = (status) => ({
       ? "#f59e0b"
       : "#ef4444"
 });
+
+const profileCard = {
+  background: "white",
+  padding: "25px",
+  borderRadius: "12px",
+  boxShadow: "0 10px 25px rgba(0,0,0,0.05)",
+  marginBottom: "30px",
+  marginTop: "25px"
+};
+
+const profileLayout = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+  gap: "15px",
+  fontSize: "15px",
+  color: "#334155"
+};
+
+const profileField = {
+  background: "#f8fafc",
+  padding: "12px 15px",
+  borderRadius: "8px",
+  border: "1px solid #e2e8f0"
+};
+
+const uploadBtn = {
+  background: "#2563eb",
+  color: "white",
+  border: "none",
+  padding: "8px 16px",
+  borderRadius: "8px",
+  cursor: "pointer",
+  fontWeight: "bold",
+  fontSize: "14px",
+  transition: "background 0.2s"
+};

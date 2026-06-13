@@ -25,7 +25,7 @@ export default function MyActivities() {
   useEffect(() => {
     if (!user.email) return;
 
-    fetch(`http://localhost:5000/my-activities?email=${user.email}`)
+    fetch(`https://student-activities-record-system.onrender.com/my-activities?email=${user.email}`)
       .then(res => res.json())
       .then(data => setActivities(data))
       .catch(err => console.log(err));
@@ -45,7 +45,20 @@ export default function MyActivities() {
       if (link.match(/^\d+-/)) {
         const parts = link.split("-");
         const name = parts.slice(1).join("-");
-        return { name: name, url: `http://localhost:5000/uploads/${link}` };
+        const timestamp = parseInt(parts[0], 10);
+        let uploadedAt = "";
+        if (!isNaN(timestamp)) {
+          const dateObj = new Date(timestamp);
+          uploadedAt = dateObj.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          }) + " " + dateObj.toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        }
+        return { name: name, url: `https://student-activities-record-system.onrender.com/uploads/${link}`, uploadedAt: uploadedAt };
       }
       // Fallback for external links without http
       return { name: "View Link", url: `https://${link}` };
@@ -57,7 +70,7 @@ export default function MyActivities() {
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this activity?")) return;
 
-    const res = await fetch(`http://localhost:5000/delete-activity/${id}`, {
+    const res = await fetch(`https://student-activities-record-system.onrender.com/delete-activity/${id}`, {
       method: "DELETE"
     });
 
@@ -105,7 +118,7 @@ export default function MyActivities() {
         });
       }
 
-      const res = await fetch(`http://localhost:5000/edit-activity/${selected.id}`, {
+      const res = await fetch(`https://student-activities-record-system.onrender.com/edit-activity/${selected.id}`, {
         method: "PUT",
         body: formData
       });
@@ -115,7 +128,7 @@ export default function MyActivities() {
 
       if (res.ok) {
         // Refetch to sync state
-        const refetchRes = await fetch(`http://localhost:5000/my-activities?email=${user.email}`);
+        const refetchRes = await fetch(`https://student-activities-record-system.onrender.com/my-activities?email=${user.email}`);
         const updatedData = await refetchRes.json();
         setActivities(updatedData);
 
@@ -321,7 +334,7 @@ export default function MyActivities() {
                           return (
                             <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f8fafc", padding: "8px 12px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
                               <a href={doc.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", color: "#2563eb", fontSize: "13px", fontWeight: "600", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "80%" }}>
-                                📄 {doc.name}
+                                📄 {doc.name} {doc.uploadedAt && <span style={{ fontSize: "11px", color: "#64748b", fontWeight: "normal" }}>({doc.uploadedAt})</span>}
                               </a>
                               <button
                                 type="button"
@@ -394,7 +407,10 @@ export default function MyActivities() {
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                       {getDocuments(selected.proofLink).map((doc, idx) => (
                         <div key={idx} style={documentBox}>
-                          <p style={{ margin: 0, color: "#475569", fontSize: "14px", marginBottom: "8px" }}>Supporting document #{idx + 1}:</p>
+                          <p style={{ margin: 0, color: "#475569", fontSize: "14px", marginBottom: "8px" }}>
+                            Supporting document #{idx + 1}
+                            {doc.uploadedAt && <span style={{ fontSize: "12px", color: "#64748b", marginLeft: "8px" }}>• Uploaded on {doc.uploadedAt}</span>}
+                          </p>
                           <a 
                             href={doc.url} 
                             target="_blank" 

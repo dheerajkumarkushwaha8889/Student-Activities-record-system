@@ -8,7 +8,7 @@ export default function AllRecords() {
 
   // ✅ FETCH FROM DATABASE
   useEffect(() => {
-    fetch("http://localhost:5000/all-activities")
+    fetch("https://student-activities-record-system.onrender.com/all-activities")
       .then(res => res.json())
       .then(data => setActivities(data))
       .catch(err => console.log(err));

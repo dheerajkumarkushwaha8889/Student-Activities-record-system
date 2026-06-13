@@ -521,7 +521,7 @@ app.put("/edit-student/:email", (req, res) => {
 
 /* ================= GET ALL FACULTIES ================= */
 app.get("/all-faculties", (req, res) => {
-  const sql = "SELECT id, name, email, facultyId, branch, mobile FROM user WHERE role='Faculty'";
+  const sql = "SELECT id, name, email, facultyId, branch, mobile, signature FROM user WHERE role='Faculty'";
   db.query(sql, (err, result) => {
     if (err) return res.json({ message: "Database Error ❌" });
     res.json(result);
@@ -552,7 +552,7 @@ app.delete("/delete-faculty/:id", (req, res) => {
 /* ================= VERIFY PORTFOLIO ================= */
 app.get("/verify-portfolio/:token", (req, res) => {
   const { token } = req.params;
-  
+
   try {
     // Decode base64 email
     const email = Buffer.from(token, 'base64').toString('utf-8');
@@ -561,7 +561,7 @@ app.get("/verify-portfolio/:token", (req, res) => {
     const userSql = "SELECT name, email, roll, branch, batch, mobile, semester FROM user WHERE email = ? AND role = 'Student'";
     db.query(userSql, [email], (err, userResult) => {
       if (err) return res.json({ success: false, message: "Database Error" });
-      
+
       if (userResult.length === 0) {
         return res.json({ success: false, message: "Student not found" });
       }
@@ -584,6 +584,39 @@ app.get("/verify-portfolio/:token", (req, res) => {
   } catch (error) {
     res.json({ success: false, message: "Invalid Verification Token" });
   }
+});
+
+/* ================= UPLOAD FACULTY SIGNATURE ================= */
+app.post("/upload-signature", upload.single("signature"), (req, res) => {
+  const { email } = req.body;
+  if (!req.file) {
+    return res.status(400).json({ message: "No file uploaded ❌" });
+  }
+
+  const signaturePath = req.file.filename;
+  const sql = "UPDATE user SET signature = ? WHERE email = ? AND role = 'faculty'";
+  
+  db.query(sql, [signaturePath, email], (err) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ message: "Database Error ❌" });
+    }
+    res.json({ message: "Signature uploaded successfully ✅", signature: signaturePath });
+  });
+});
+
+/* ================= GET USER PROFILE ================= */
+app.get("/user-profile", (req, res) => {
+  const { email } = req.query;
+  if (!email) return res.status(400).json({ message: "Email required" });
+
+  const sql = "SELECT id, name, email, role, branch, batch, mobile, facultyId, roll, semester, signature FROM user WHERE email = ?";
+  db.query(sql, [email], (err, results) => {
+    if (err) return res.status(500).json({ message: "Database Error" });
+    if (results.length === 0) return res.status(404).json({ message: "User not found" });
+    
+    res.json(results[0]);
+  });
 });
 
 /* ================= SERVER ================= */

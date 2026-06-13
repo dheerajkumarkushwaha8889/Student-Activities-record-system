@@ -8,7 +8,7 @@ export default function VerifyPortfolio() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch(`http://localhost:5000/verify-portfolio/${token}`)
+    fetch(`https://student-activities-record-system.onrender.com/verify-portfolio/${token}`)
       .then((res) => res.json())
       .then((resData) => {
         if (resData.success) {

@@ -29,12 +29,15 @@ export default function FacultyLayout() {
 
         {/* TOP SECTION */}
         <div>
-          <h2 style={{ marginBottom: "10px" }}>
+          <h2 style={{ marginBottom: "5px" }}>
             👨‍🏫 Faculty Panel
           </h2>
 
-          <p style={{ fontSize: "14px", opacity: 0.8, marginBottom: "20px" }}>
+          <p style={{ fontSize: "14px", fontWeight: "bold", opacity: 0.9, marginBottom: "2px" }}>
             {user.name}
+          </p>
+          <p style={{ fontSize: "12px", opacity: 0.7, marginBottom: "20px" }}>
+            Branch: {user.branch || "N/A"}
           </p>
 
           {/* MENU */}
